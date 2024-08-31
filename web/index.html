@@ -20,6 +20,26 @@
 		<script type="module" crossorigin src="./assets/index-CaD4RONs.js"></script>
 		<link rel="stylesheet" crossorigin href="./assets/index-DAK31IJJ.css">
 		<script>
+			// Read the localstorage for "workflow" field
+			let storedApiJson = null;
+
+			// Function to check if any change has been made to the stored workflow
+			function checkForChanges() {
+				app.graphToPrompt().then(p=>{
+					if(storedApiJson === null) {
+						storedApiJson = JSON.stringify(p.output, null, 2);
+					}
+					const apiJson = JSON.stringify(p.output, null, 2);
+					if (apiJson !== storedApiJson) {
+						// Send a message to the parent window if change is detected
+						window.parent.postMessage({ type: 'workflowChanged', data: {currentApiJson: apiJson, storedApiJson: storedApiJson} }, '*');
+						storedApiJson = apiJson; // Update the stored workflow
+					}
+				});
+			}
+
+			// Call the checkForChanges function every second
+			setInterval(checkForChanges, 1000);
 			window.addEventListener('message', (event) => {
 				if (event.data.type === 'loadGraphData') {
 					app.loadGraphData(event.data.data);
